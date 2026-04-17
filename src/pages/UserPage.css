@@ -1,0 +1,54 @@
+.user-container {
+  padding: 24px;
+  background-color: var(--bg);
+  min-height: 100%;
+}
+
+.table-card {
+  background: var(--surface);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.user-table th {
+  background-color: var(--accent);
+  color: white;
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+}
+
+.user-table td {
+  padding: 16px;
+  border-bottom: 1px solid #eef2f6;
+  color: var(--text);
+}
+
+.user-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+.status-tag {
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.active-tag {
+    background-color: #e8fff3;
+    color: #50cd89;
+    border: 1px solid #50cd89;
+}
+
+.locked-tag {
+    background-color: #fff5f8;
+    color: #f1416c;
+    border: 1px solid #f1416c;
+}

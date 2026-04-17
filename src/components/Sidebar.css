@@ -1,0 +1,127 @@
+.sidebar {
+  width: 250px;
+  background-color: #0f172a;
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  height: calc(100vh - 72px);
+  transition: width 0.3s ease;
+  position: fixed;
+  left: 0;
+  top: 72px;
+  z-index: 1000;
+}
+
+.sidebar.collapsed {
+  width: 60px;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 36px;
+}
+
+.sidebar-header h2 {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+.sidebar.collapsed .sidebar-header h2 {
+  display: none;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-btn:hover {
+  background-color: #1f2937;
+}
+
+.sidebar a {
+  padding: 12px 16px;
+  text-decoration: none;
+  color: #cbd5e1;
+  font-weight: 600;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  transition: background-color 0.25s ease, color 0.25s ease;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.sidebar.collapsed a {
+  justify-content: center;
+  padding: 12px;
+}
+
+.nav-icon {
+  font-size: 1.1rem;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.nav-text {
+  flex: 1;
+}
+
+.sidebar.collapsed .nav-text {
+  display: none;
+}
+
+.sidebar.collapsed a:hover .nav-text {
+  display: block;
+  position: absolute;
+  left: 60px;
+  background: var(--accent);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar a:hover, .sidebar a.active {
+  background-color: #1f2937;
+  color: white;
+}
+
+.badge-count {
+  background-color: var(--danger);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-left: auto;
+  vertical-align: middle;
+  animation: pulse 2s infinite;
+}
+
+@keyframes glow {
+  from { box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3); }
+  to { box-shadow: 0 4px 12px rgba(251, 191, 36, 0.5), 0 0 20px rgba(251, 191, 36, 0.2); }
+}
