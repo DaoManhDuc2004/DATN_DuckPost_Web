@@ -5,7 +5,7 @@ import Header from './components/Header';
 import DriverPage from './pages/DriverPage';
 import UserPage from './pages/UserPage';
 import OrderPage from './pages/OrderPage';
-import DriverManagerByAdmin from './pages/driverManagerByAdmin';
+import DriverManagerByAdmin from './pages/DriverManagerTemp';
 import WalletPage from './pages/WalletPage';
 import DashboardPage from './pages/DashboardPage';
 import PricingManager from './pages/PricingManager';
