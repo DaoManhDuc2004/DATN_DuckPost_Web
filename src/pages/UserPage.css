@@ -52,3 +52,145 @@
     color: #f1416c;
     border: 1px solid #f1416c;
 }
+
+.btn-lock-customer,
+.btn-unlock-customer {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-lock-customer {
+  background-color: #f1416c;
+}
+
+.btn-lock-customer:hover {
+  background-color: #d9214e;
+}
+
+.btn-unlock-customer {
+  background-color: #50cd89;
+}
+
+.btn-unlock-customer:hover {
+  background-color: #35a96b;
+}
+
+.btn-lock-customer:disabled,
+.btn-unlock-customer:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.lock-info {
+  max-width: 220px;
+}
+
+.lock-reason {
+  color: #f1416c;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.lock-time {
+  font-size: 12px;
+  color: #888;
+}
+
+.customer-lock-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.customer-lock-modal {
+  width: 460px;
+  max-width: calc(100% - 32px);
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.customer-lock-modal h2 {
+  margin-top: 0;
+  color: var(--text);
+}
+
+.customer-lock-modal label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.customer-lock-modal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d8dce3;
+  border-radius: 10px;
+  padding: 12px;
+  resize: vertical;
+  font-family: inherit;
+  outline: none;
+}
+
+.customer-lock-modal textarea:focus {
+  border-color: var(--accent);
+}
+
+.quick-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.quick-reasons button {
+  border: 1px solid #d8dce3;
+  background: #f7f9fc;
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.quick-reasons button:hover {
+  background: #eef2f6;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.btn-cancel-lock,
+.btn-confirm-lock {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-cancel-lock {
+  background: #e4e6ef;
+  color: #333;
+}
+
+.btn-confirm-lock {
+  background: #f1416c;
+  color: white;
+}
+
+.btn-confirm-lock:hover {
+  background: #d9214e;
+}

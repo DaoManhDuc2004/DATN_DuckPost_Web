@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// const BASE_URL = 'http://192.168.28.152:8000/api'; 
-const BASE_URL = 'https://datn-duckpost-backend.onrender.com/api'; 
+const BASE_URL = 'http://192.168.0.104:8000/api'; 
+// const BASE_URL = 'https://datn-duckpost-backend.onrender.com/api'; 
 const ApiClient = axios.create({
     baseURL: BASE_URL,
     headers: {
