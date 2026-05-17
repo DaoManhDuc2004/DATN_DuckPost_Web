@@ -186,78 +186,134 @@ const UserPage = () => {
           </tbody>
         </table>
       </div>
-      {lockModal.open && (
-        <div className="customer-lock-modal-overlay">
-          <div className="customer-lock-modal">
-            <h2>Khóa tài khoản khách hàng</h2>
-
-            <p>
-              Khách hàng: <b>{lockModal.customer?.name}</b>
-            </p>
-
-            <label>Lý do khóa</label>
-            <textarea
-              value={lockModal.reason}
-              onChange={(e) =>
-                setLockModal({
-                  ...lockModal,
-                  reason: e.target.value,
-                })
-              }
-              placeholder="Ví dụ: Đặt đơn ảo nhiều lần, hủy đơn bất thường..."
-              rows={4}
-            />
-
-            <div className="quick-reasons">
-              <button
-                type="button"
-                onClick={() =>
-                  setLockModal({
-                    ...lockModal,
-                    reason: "Đặt đơn ảo nhiều lần",
-                  })
-                }
-              >
-                Đặt đơn ảo
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setLockModal({
-                    ...lockModal,
-                    reason: "Hủy đơn bất thường nhiều lần",
-                  })
-                }
-              >
-                Hủy đơn nhiều
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setLockModal({
-                    ...lockModal,
-                    reason: "Cung cấp thông tin giao hàng sai lệch",
-                  })
-                }
-              >
-                Thông tin sai
-              </button>
-            </div>
-
-            <div className="modal-actions">
-              <button className="btn-cancel-lock" onClick={closeLockModal} disabled={loadingAction}>
-                Hủy
-              </button>
-
-              <button className="btn-confirm-lock" onClick={handleLockCustomer} disabled={loadingAction}>
-                {loadingAction ? "Đang xử lý..." : "Xác nhận khóa"}
-              </button>
-            </div>
-          </div>
+{lockModal.open && (
+  <div className="customer-lock-modal-overlay">
+    <div className="customer-lock-modal">
+      <div className="lock-modal-header">
+        <div>
+          <div className="lock-modal-badge">KHÓA TÀI KHOẢN</div>
+          <h2>Khóa tài khoản khách hàng</h2>
+          <p className="lock-modal-subtitle">
+            Khách hàng sẽ không thể đăng nhập cho đến khi được mở khóa.
+          </p>
         </div>
-      )}
+
+        <button
+          type="button"
+          className="lock-modal-close"
+          onClick={closeLockModal}
+          disabled={loadingAction}
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="customer-lock-info-box">
+        <div className="customer-lock-avatar">
+          {lockModal.customer?.name?.charAt(0)?.toUpperCase() || "K"}
+        </div>
+
+        <div>
+          <div className="customer-lock-label">Khách hàng</div>
+          <div className="customer-lock-name">{lockModal.customer?.name}</div>
+        </div>
+      </div>
+
+      <label className="lock-reason-label">
+        Lý do khóa <span>*</span>
+      </label>
+
+      <textarea
+        className="lock-reason-textarea"
+        value={lockModal.reason}
+        onChange={(e) =>
+          setLockModal({
+            ...lockModal,
+            reason: e.target.value,
+          })
+        }
+        placeholder="Nhập lý do khóa tài khoản..."
+        rows={5}
+        maxLength={250}
+        spellCheck={false}
+      />
+
+      <div className="lock-reason-meta">
+        <span>Chọn lý do nhanh hoặc nhập lý do cụ thể.</span>
+        <span>{lockModal.reason.length}/250</span>
+      </div>
+
+      <div className="quick-reasons">
+        <button
+          type="button"
+          className={`reason-chip ${
+            lockModal.reason === "Đặt đơn ảo nhiều lần" ? "active" : ""
+          }`}
+          onClick={() =>
+            setLockModal({
+              ...lockModal,
+              reason: "Đặt đơn ảo nhiều lần",
+            })
+          }
+        >
+          Đặt đơn ảo
+        </button>
+
+        <button
+          type="button"
+          className={`reason-chip ${
+            lockModal.reason === "Hủy đơn bất thường nhiều lần" ? "active" : ""
+          }`}
+          onClick={() =>
+            setLockModal({
+              ...lockModal,
+              reason: "Hủy đơn bất thường nhiều lần",
+            })
+          }
+        >
+          Hủy đơn nhiều
+        </button>
+
+        <button
+          type="button"
+          className={`reason-chip ${
+            lockModal.reason === "Cung cấp thông tin giao hàng sai lệch" ? "active" : ""
+          }`}
+          onClick={() =>
+            setLockModal({
+              ...lockModal,
+              reason: "Cung cấp thông tin giao hàng sai lệch",
+            })
+          }
+        >
+          Thông tin sai
+        </button>
+      </div>
+
+      <div className="lock-warning-box">
+        Sau khi khóa, tài khoản khách hàng sẽ bị chặn đăng nhập trên ứng dụng.
+      </div>
+
+      <div className="modal-actions">
+        <button
+          className="btn-cancel-lock"
+          onClick={closeLockModal}
+          disabled={loadingAction}
+        >
+          Hủy
+        </button>
+
+        <button
+          className="btn-confirm-lock"
+          onClick={handleLockCustomer}
+          disabled={loadingAction}
+        >
+          {loadingAction ? "Đang xử lý..." : "Xác nhận khóa"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };
