@@ -189,79 +189,111 @@ const UserPage = () => {
         </div>
       </div>
 
-      <div className="table-card">
-        <table className="user-table">
-          <thead>
-            <tr>
-              <th style={{ width: "50px" }}>STT</th>
-              <th>Họ và Tên</th>
-              <th>Số điện thoại</th>
-              <th>Email</th>
-              <th>Thông tin cá nhân</th>
-              <th>Trạng thái</th>
-              <th>Lý do khóa</th>
-              <th style={{ width: "140px" }}>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {customers.map((user, index) => (
-              <tr key={user.id || index}>
-                <td style={{ textAlign: "center" }}>{index + 1}</td>
+<div className="table-card full-table-card">
+  <table className="user-table full-info-table">
+    <thead>
+      <tr>
+        <th>STT</th>
+        <th>Mã KH</th>
+        <th>Họ và tên</th>
+        <th>Số điện thoại</th>
+        <th>Email</th>
+        <th>Ngày sinh</th>
+        <th>Giới tính</th>
+        <th>Quê quán</th>
+        <th>Trạng thái</th>
+        <th>Ngày tạo</th>
+        <th>Hoạt động gần nhất</th>
+        <th>Thông tin khóa</th>
+        <th>Hành động</th>
+      </tr>
+    </thead>
 
-                <td>
-                  <b>{user.name}</b>
-                </td>
+    <tbody>
+      {customers.map((user, index) => (
+        <tr key={user.id || index}>
+          <td style={{ textAlign: "center" }}>{index + 1}</td>
 
-                <td style={{ color: "#009ef7", fontWeight: "bold" }}>{user.phone}</td>
+          <td className="id-cell">{user.id || "---"}</td>
 
-                <td>{user.email || <span style={{ color: "#999" }}>---</span>}</td>
+          <td>
+            <b>{user.name || "---"}</b>
+          </td>
 
-                <td>
-                  {user.gender} - {user.birthday}
-                </td>
+          <td className="phone-cell">{user.phone || "---"}</td>
 
-                <td>
-                  {user.status === "ACTIVE" ? (
-                    <span className="status-tag active-tag">Hoạt động</span>
-                  ) : (
-                    <span className="status-tag locked-tag">{user.status}</span>
-                  )}
-                </td>
-                <td>
-                  {user.status === "LOCKED" ? (
-                    <div className="lock-info">
-                      <div className="lock-reason">{user.lockReason || "Không có lý do"}</div>
-                      <div className="lock-time">{formatDateTime(user.lockedAt)}</div>
-                    </div>
-                  ) : (
-                    <span style={{ color: "#999" }}>---</span>
-                  )}
-                </td>
+          <td>{user.email || "---"}</td>
 
-                <td>
-                  {user.status === "LOCKED" ? (
-                    <button className="btn-unlock-customer" disabled={loadingAction} onClick={() => handleUnlockCustomer(user)}>
-                      Mở khóa
-                    </button>
-                  ) : (
-                    <button className="btn-lock-customer" disabled={loadingAction} onClick={() => openLockModal(user)}>
-                      Khóa TK
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
+          <td>{user.birthday || "---"}</td>
 
-            {customers.length === 0 && (
-              <tr>
-                <td colSpan="8" style={{ textAlign: "center", padding: 20, color: "#888" }}>
-                  Chưa có khách hàng nào đăng ký.
-                </td>
-              </tr>
+          <td>{user.gender || "---"}</td>
+
+          <td>{user.hometown || "---"}</td>
+          
+          <td>
+            {user.status === "ACTIVE" ? (
+              <span className="status-tag active-tag">Hoạt động</span>
+            ) : user.status === "LOCKED" ? (
+              <span className="status-tag locked-tag">Đã khóa</span>
+            ) : (
+              <span className="status-tag muted-tag">{user.status || "---"}</span>
             )}
-          </tbody>
-        </table>
-      </div>
+          </td>
+
+          <td>{formatDateTime(user.createdAt)}</td>
+
+          <td>{formatDateTime(user.lastActiveAt)}</td>
+
+          <td>
+            {user.status === "LOCKED" ? (
+              <div className="lock-info">
+                <div className="lock-reason">
+                  {user.lockReason || "Không có lý do"}
+                </div>
+                <div className="lock-time">
+                  {formatDateTime(user.lockedAt)}
+                </div>
+              </div>
+            ) : (
+              <span className="sub-text">---</span>
+            )}
+          </td>
+
+          <td>
+            {user.status === "LOCKED" ? (
+              <button
+                className="btn-unlock-customer"
+                disabled={loadingAction}
+                onClick={() => handleUnlockCustomer(user)}
+              >
+                Mở khóa
+              </button>
+            ) : (
+              <button
+                className="btn-lock-customer"
+                disabled={loadingAction}
+                onClick={() => openLockModal(user)}
+              >
+                Khóa TK
+              </button>
+            )}
+          </td>
+        </tr>
+      ))}
+
+      {customers.length === 0 && (
+        <tr>
+          <td
+            colSpan="15"
+            style={{ textAlign: "center", padding: 20, color: "#888" }}
+          >
+            Chưa có khách hàng nào đăng ký.
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
       {lockModal.open && (
         <div className="customer-lock-modal-overlay">
           <div className="customer-lock-modal">
