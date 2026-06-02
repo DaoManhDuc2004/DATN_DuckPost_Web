@@ -221,14 +221,14 @@ const OrderPage = () => {
           <thead>
             <tr>
               <th>Mã đơn</th>
-              <th>Timelines (Thời gian)</th>
+              <th>Thời gian</th>
               <th>Khách hàng</th>
               <th>Tài xế nhận</th>
-              <th>Lộ trình (A ➡️ B)</th>
+              <th>Lộ trình di chuyển</th>
               <th>Hàng hóa & Cước phí</th>
-              <th>Đánh giá (Review)</th>
+              <th>Đánh giá đơn hàng</th>
               <th>Trạng thái</th>
-              <th>Bằng chứng</th>
+              <th>Ảnh minh chứng</th>
             </tr>
           </thead>
           <tbody>
@@ -335,7 +335,7 @@ const OrderPage = () => {
                 <td style={{ minWidth: "160px" }}>
                   <b style={{ color: "#d35400", fontSize: "15px" }}>{order.price}</b>
                   <span style={{ fontSize: "11px", marginLeft: 5, padding: "2px 4px", background: "#eee", borderRadius: 4 }}>
-                    {order.paymentMethod === "SENDER" ? "Gửi trả ship" : "Nhận trả ship"}
+                    {order.paymentMethod === "SENDER" ? "Người gửi trả ship" : "Người nhận trả ship"}
                   </span>
                   <br />
 
