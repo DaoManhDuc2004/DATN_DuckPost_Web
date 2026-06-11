@@ -76,9 +76,7 @@ const DriverManagerByAdmin = () => {
       });
 
       const query = params.toString();
-      const res = await ApiClient.get(
-        `/admin/drivers/all${query ? `?${query}` : ""}`
-      );
+      const res = await ApiClient.get(`/admin/drivers/all${query ? `?${query}` : ""}`);
 
       setDrivers(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
@@ -107,23 +105,51 @@ const DriverManagerByAdmin = () => {
 
   const handleToggleLock = async (driverId, currentStatus, driverName) => {
     const newStatus = currentStatus === "LOCKED" ? "ACTIVE" : "LOCKED";
-    const confirmMsg =
-      newStatus === "LOCKED"
-        ? `Bạn muốn KHÓA tài khoản của ${driverName}?`
-        : `Bạn muốn MỞ KHÓA tài khoản cho ${driverName}?`;
+    const confirmMsg = newStatus === "LOCKED" ? `Bạn muốn KHÓA tài khoản của ${driverName}?` : `Bạn muốn MỞ KHÓA tài khoản cho ${driverName}?`;
 
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      await ApiClient.post(
-        `/admin/driver/toggle-lock?driverId=${driverId}&status=${newStatus}`
-      );
+      await ApiClient.post(`/admin/driver/toggle-lock?driverId=${driverId}&status=${newStatus}`);
       alert("Thao tác thành công!");
       fetchAll(filters);
       setSelectedDriver(null);
     } catch (error) {
       alert("Lỗi hệ thống khi thao tác!");
       console.error(error);
+    }
+  };
+
+  const handleRestoreRank = async (driver) => {
+    const driverId = getDriverId(driver);
+
+    if (!driverId) {
+      alert("Không tìm thấy mã tài xế.");
+      return;
+    }
+
+    const reason = window.prompt(`Nhập lý do phục hồi hạng cho tài xế "${driver.name}":`, "Tài xế nghỉ có phép / có lý do chính đáng và đã báo cáo qua Zalo");
+
+    if (reason === null) return;
+
+    if (!window.confirm(`Xác nhận phục hồi 1 hạng cho tài xế "${driver.name}"?`)) {
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams({
+        driverId,
+        reason: reason.trim() || "Tài xế có lý do nghỉ hợp lệ",
+      });
+
+      const res = await ApiClient.post(`/admin/driver/restore-rank?${params.toString()}`);
+
+      alert(res.data || "Đã phục hồi hạng tài xế.");
+      fetchAll(filters);
+      setSelectedDriver(null);
+    } catch (error) {
+      console.error("Lỗi phục hồi hạng:", error);
+      alert(error.response?.data || "Không thể phục hồi hạng tài xế.");
     }
   };
 
@@ -141,11 +167,7 @@ const DriverManagerByAdmin = () => {
       className: "status-muted",
     };
 
-    return (
-      <span className={`status-badge ${current.className}`}>
-        {current.label}
-      </span>
-    );
+    return <span className={`status-badge ${current.className}`}>{current.label}</span>;
   };
 
   const renderDocumentSummary = (driver) => {
@@ -171,20 +193,14 @@ const DriverManagerByAdmin = () => {
 
     if (driver.status === "LOCKED") {
       return (
-        <button
-          className="btn-toggle-lock btn-unlock"
-          onClick={() => handleToggleLock(driverId, driver.status, driver.name)}
-        >
+        <button className="btn-toggle-lock btn-unlock" onClick={() => handleToggleLock(driverId, driver.status, driver.name)}>
           Mở khóa
         </button>
       );
     }
 
     return (
-      <button
-        className="btn-toggle-lock btn-lock"
-        onClick={() => handleToggleLock(driverId, driver.status, driver.name)}
-      >
+      <button className="btn-toggle-lock btn-lock" onClick={() => handleToggleLock(driverId, driver.status, driver.name)}>
         Khóa TK
       </button>
     );
@@ -208,10 +224,7 @@ const DriverManagerByAdmin = () => {
         <div className="filter-header">
           <div>
             <h3>Bộ lọc tài xế</h3>
-            <p>
-              Lọc theo tên, email, số điện thoại, CCCD, quê quán, biển số, loại
-              xe và trạng thái.
-            </p>
+            <p>Lọc theo tên, email, số điện thoại, CCCD, quê quán, biển số, loại xe và trạng thái.</p>
           </div>
 
           <div className="filter-actions">
@@ -225,46 +238,19 @@ const DriverManagerByAdmin = () => {
         </div>
 
         <div className="filter-grid">
-          <input
-            placeholder="Tìm nhanh tên / SĐT / email..."
-            value={filters.keyword}
-            onChange={(e) => handleFilterChange("keyword", e.target.value)}
-          />
+          <input placeholder="Tìm nhanh tên / SĐT / email..." value={filters.keyword} onChange={(e) => handleFilterChange("keyword", e.target.value)} />
 
-          <input
-            placeholder="Số điện thoại"
-            value={filters.phone}
-            onChange={(e) => handleFilterChange("phone", e.target.value)}
-          />
+          <input placeholder="Số điện thoại" value={filters.phone} onChange={(e) => handleFilterChange("phone", e.target.value)} />
 
-          <input
-            placeholder="Email"
-            value={filters.email}
-            onChange={(e) => handleFilterChange("email", e.target.value)}
-          />
+          <input placeholder="Email" value={filters.email} onChange={(e) => handleFilterChange("email", e.target.value)} />
 
-          <input
-            placeholder="Số CCCD"
-            value={filters.cccdNumber}
-            onChange={(e) => handleFilterChange("cccdNumber", e.target.value)}
-          />
+          <input placeholder="Số CCCD" value={filters.cccdNumber} onChange={(e) => handleFilterChange("cccdNumber", e.target.value)} />
 
-          <input
-            placeholder="Quê quán"
-            value={filters.hometown}
-            onChange={(e) => handleFilterChange("hometown", e.target.value)}
-          />
+          <input placeholder="Quê quán" value={filters.hometown} onChange={(e) => handleFilterChange("hometown", e.target.value)} />
 
-          <input
-            placeholder="Biển số xe"
-            value={filters.licensePlate}
-            onChange={(e) => handleFilterChange("licensePlate", e.target.value)}
-          />
+          <input placeholder="Biển số xe" value={filters.licensePlate} onChange={(e) => handleFilterChange("licensePlate", e.target.value)} />
 
-          <select
-            value={filters.vehicleType}
-            onChange={(e) => handleFilterChange("vehicleType", e.target.value)}
-          >
+          <select value={filters.vehicleType} onChange={(e) => handleFilterChange("vehicleType", e.target.value)}>
             <option value="">Tất cả loại xe</option>
             <option value="Xe máy">Xe máy</option>
             <option value="Ô tô">Ô tô</option>
@@ -274,10 +260,7 @@ const DriverManagerByAdmin = () => {
             <option value="CAR7">CAR7</option>
           </select>
 
-          <select
-            value={filters.status}
-            onChange={(e) => handleFilterChange("status", e.target.value)}
-          >
+          <select value={filters.status} onChange={(e) => handleFilterChange("status", e.target.value)}>
             <option value="">Tất cả trạng thái</option>
             <option value="PENDING">Chờ duyệt</option>
             <option value="ACTIVE">Đã duyệt</option>
@@ -315,81 +298,50 @@ const DriverManagerByAdmin = () => {
 
                   <td className="driver-info-cell">
                     <div className="driver-profile">
-                      <div className="driver-avatar">
-                        {getInitials(driver.name)}
-                      </div>
+                      <div className="driver-avatar">{getInitials(driver.name)}</div>
 
                       <div>
-                        <div className="driver-name">
-                          {driver.name || "---"}
-                        </div>
-                        <div className="sub-text id-line">
-                          ID: {driverId || "---"}
-                        </div>
-                        <div className="sub-text">
-                          {driver.hometown || "---"}
-                        </div>
+                        <div className="driver-name">{driver.name || "---"}</div>
+                        <div className="sub-text id-line">ID: {driverId || "---"}</div>
+                        <div className="sub-text">{driver.hometown || "---"}</div>
                       </div>
                     </div>
                   </td>
 
                   <td>
                     <div className="primary-text">{driver.phone || "---"}</div>
-                    <div className="sub-text wrap-text">
-                      {driver.email || "---"}
-                    </div>
-                    <div className="sub-text">
-                      CCCD: {driver.cccdNumber || "---"}
-                    </div>
+                    <div className="sub-text wrap-text">{driver.email || "---"}</div>
+                    <div className="sub-text">CCCD: {driver.cccdNumber || "---"}</div>
                   </td>
 
                   <td>
-                    <div className="primary-text">
-                      {driver.vehicleType || "---"}
-                    </div>
-                    <div className="license-plate-text">
-                      {driver.licensePlate || "---"}
-                    </div>
+                    <div className="primary-text">{driver.vehicleType || "---"}</div>
+                    <div className="license-plate-text">{driver.licensePlate || "---"}</div>
                   </td>
 
                   <td>{renderStatus(driver.status)}</td>
 
                   <td>
-                    <div className="primary-text">
-                      {money(driver.walletBalance)}
-                    </div>
-                    <div className="sub-text">
-                      {driver.weeklyTrips ?? 0} chuyến/tuần
-                    </div>
-                    <div className="sub-text">
-                      Hạng: {driver.driverRank || "NONE"}
-                    </div>
+                    <div className="primary-text">{money(driver.walletBalance)}</div>
+                    <div className="sub-text">{driver.weeklyTrips ?? 0} chuyến/tuần</div>
+                    <div className="sub-text">Hạng: {driver.driverRank || "NONE"}</div>
                   </td>
 
                   <td>
-                    <div className="primary-text">
-                      {Number(driver.averageRating || 0).toFixed(1)} ⭐
-                    </div>
-                    <div className="sub-text">
-                      {driver.totalRatings || 0} lượt
-                    </div>
+                    <div className="primary-text">{Number(driver.averageRating || 0).toFixed(1)} ⭐</div>
+                    <div className="sub-text">{driver.totalRatings || 0} lượt</div>
                   </td>
 
                   <td>
                     {renderDocumentSummary(driver)}
-                    <button
-                      className="btn-detail"
-                      onClick={() => setSelectedDriver(driver)}
-                    >
+                    <button className="btn-detail" onClick={() => setSelectedDriver(driver)}>
                       Xem chi tiết
                     </button>
                   </td>
 
                   <td>
                     <div>{formatDateTime(driver.createdAt)}</div>
-                    <div className="sub-text">
-                      Online: {formatDateTime(driver.lastActiveAt)}
-                    </div>
+                    <div className="sub-text">Online: {formatDateTime(driver.lastActiveAt)}</div>
                   </td>
 
                   <td>{renderActionButton(driver)}</td>
@@ -409,24 +361,15 @@ const DriverManagerByAdmin = () => {
       </div>
 
       {selectedDriver && (
-        <div
-          className="modal-backdrop"
-          onClick={() => setSelectedDriver(null)}
-        >
-          <div
-            className="driver-detail-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="modal-backdrop" onClick={() => setSelectedDriver(null)}>
+          <div className="driver-detail-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div>
                 <h2>{selectedDriver.name || "Chi tiết tài xế"}</h2>
                 <p>{selectedDriver.email || "---"}</p>
               </div>
 
-              <button
-                className="btn-close-modal"
-                onClick={() => setSelectedDriver(null)}
-              >
+              <button className="btn-close-modal" onClick={() => setSelectedDriver(null)}>
                 ✕
               </button>
             </div>
@@ -468,6 +411,9 @@ const DriverManagerByAdmin = () => {
                 <p>
                   <b>Hạng:</b> {selectedDriver.driverRank || "NONE"}
                 </p>
+                <button className="btn-restore-rank" onClick={() => handleRestoreRank(selectedDriver)}>
+                  Phục hồi 1 hạng
+                </button>
                 <p>
                   <b>Chuyến/tuần:</b> {selectedDriver.weeklyTrips ?? 0}
                 </p>
@@ -479,8 +425,7 @@ const DriverManagerByAdmin = () => {
                   <b>Số dư ví:</b> {money(selectedDriver.walletBalance)}
                 </p>
                 <p>
-                  <b>Đánh giá TB:</b>{" "}
-                  {Number(selectedDriver.averageRating || 0).toFixed(1)} ⭐
+                  <b>Đánh giá TB:</b> {Number(selectedDriver.averageRating || 0).toFixed(1)} ⭐
                 </p>
                 <p>
                   <b>Lượt đánh giá:</b> {selectedDriver.totalRatings || 0}
@@ -489,8 +434,7 @@ const DriverManagerByAdmin = () => {
                   <b>Ngày tạo:</b> {formatDateTime(selectedDriver.createdAt)}
                 </p>
                 <p>
-                  <b>Hoạt động gần nhất:</b>{" "}
-                  {formatDateTime(selectedDriver.lastActiveAt)}
+                  <b>Hoạt động gần nhất:</b> {formatDateTime(selectedDriver.lastActiveAt)}
                 </p>
               </div>
 
@@ -500,12 +444,9 @@ const DriverManagerByAdmin = () => {
                   <b>Lý do:</b> {selectedDriver.lockReason || "---"}
                 </p>
                 <p>
-                  <b>Thời gian khóa:</b>{" "}
-                  {formatDateTime(selectedDriver.lockedAt)}
+                  <b>Thời gian khóa:</b> {formatDateTime(selectedDriver.lockedAt)}
                 </p>
-                <div className="modal-actions">
-                  {renderActionButton(selectedDriver)}
-                </div>
+                <div className="modal-actions">{renderActionButton(selectedDriver)}</div>
               </div>
             </div>
 
@@ -518,11 +459,7 @@ const DriverManagerByAdmin = () => {
                     <span>{item.label}</span>
 
                     {selectedDriver[item.key] ? (
-                      <img
-                        src={selectedDriver[item.key]}
-                        alt={item.label}
-                        onClick={() => setSelectedImage(selectedDriver[item.key])}
-                      />
+                      <img src={selectedDriver[item.key]} alt={item.label} onClick={() => setSelectedImage(selectedDriver[item.key])} />
                     ) : (
                       <div className="empty-image">Chưa có ảnh</div>
                     )}
@@ -537,11 +474,7 @@ const DriverManagerByAdmin = () => {
       {selectedImage && (
         <div className="overlay-viewer" onClick={() => setSelectedImage(null)}>
           <button className="btn-close-viewer">✕</button>
-          <img
-            src={selectedImage}
-            alt="Full"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <img src={selectedImage} alt="Full" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
