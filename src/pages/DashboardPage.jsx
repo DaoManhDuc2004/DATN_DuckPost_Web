@@ -19,17 +19,47 @@ import "./Dashboard.css";
 
 const COMPLETED_STATUSES = ["COMPLETED", "RETURNED_COMPLETED"];
 
+const CANCELLED_STATUSES = ["CANCELLED", "CUSTOMER_CANCELLED", "DRIVER_CANCELLED"];
+
+const TIMEOUT_STATUSES = ["TIMEOUT_ALL"];
+
+const ACTIVE_ORDER_STATUSES = [
+  "SEARCHING",
+  "FOUND",
+  "PICKING_UP",
+  "ARRIVED_PICKUP",
+  "DELIVERING",
+  "RETURNING",
+];
+
 const STATUS_LABELS = {
   SEARCHING: "Đang tìm tài xế",
   FOUND: "Đã có tài xế",
+  PICKING_UP: "Tài xế đang đến điểm lấy",
   ARRIVED_PICKUP: "Đã đến điểm lấy",
   DELIVERING: "Đang giao",
   COMPLETED: "Hoàn thành",
   CANCELLED: "Đã hủy",
+  CUSTOMER_CANCELLED: "Khách hủy",
+  DRIVER_CANCELLED: "Tài xế hủy",
   RETURNING: "Đang hoàn hàng",
   RETURNED_COMPLETED: "Đã hoàn hàng",
   TIMEOUT_ALL: "Không tìm được TX",
 };
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "ALL", label: "Tất cả trạng thái" },
+  { value: "SEARCHING", label: "Đang tìm tài xế" },
+  { value: "FOUND", label: "Đã có tài xế" },
+  { value: "PICKING_UP", label: "Tài xế đang đến điểm lấy" },
+  { value: "ARRIVED_PICKUP", label: "Đã đến điểm lấy" },
+  { value: "DELIVERING", label: "Đang giao" },
+  { value: "COMPLETED", label: "Hoàn thành" },
+  { value: "CANCELLED", label: "Đã hủy" },
+  { value: "RETURNING", label: "Đang hoàn hàng" },
+  { value: "RETURNED_COMPLETED", label: "Đã hoàn hàng" },
+  { value: "TIMEOUT_ALL", label: "Không tìm được tài xế" },
+];
 
 const VEHICLE_LABELS = {
   BIKE: "Xe máy",
@@ -38,7 +68,16 @@ const VEHICLE_LABELS = {
   "Xe máy": "Xe máy",
   "Ô tô": "Ô tô",
   "Bán tải": "Bán tải",
+  "Xe tải nhỏ": "Ô tô",
+  "Xe tải to": "Bán tải",
 };
+
+const VEHICLE_FILTER_OPTIONS = [
+  { value: "ALL", label: "Tất cả phương tiện" },
+  { value: "BIKE", label: "Xe máy" },
+  { value: "CAR4", label: "Ô tô / Xe tải nhỏ" },
+  { value: "CAR7", label: "Bán tải / Xe tải to" },
+];
 
 const PIE_COLORS = [
   "#2563eb",
@@ -94,10 +133,81 @@ const getDaysBetween = (start, end) => {
   return Math.ceil((end.getTime() - start.getTime()) / oneDay);
 };
 
+const normalizeVehicleType = (value) => {
+  const v = String(value || "")
+    .trim()
+    .toUpperCase();
+
+  if (v.includes("BIKE") || v.includes("XE MÁY") || v.includes("MOTOR")) {
+    return "BIKE";
+  }
+
+  if (v.includes("CAR7") || v.includes("BÁN TẢI") || v.includes("XE TẢI TO")) {
+    return "CAR7";
+  }
+
+  if (
+    v.includes("CAR4") ||
+    v.includes("Ô TÔ") ||
+    v.includes("OTO") ||
+    v.includes("CAR") ||
+    v.includes("XE TẢI NHỎ")
+  ) {
+    return "CAR4";
+  }
+
+  return v || "UNKNOWN";
+};
+
+const getOrderVehicleType = (order) => {
+  return normalizeVehicleType(
+    order.vehicleType ||
+      order.type ||
+      order.driverVehicleType ||
+      order.vehicle ||
+      order.driverVehicle ||
+      ""
+  );
+};
+
+const getVehicleLabel = (value) => {
+  const code = normalizeVehicleType(value);
+  return VEHICLE_LABELS[code] || VEHICLE_LABELS[value] || value || "Không rõ";
+};
+
+const getOrderStatus = (order) => {
+  return String(order.status || "UNKNOWN")
+    .trim()
+    .toUpperCase();
+};
+
+const getCancelReason = (order) => {
+  const reason =
+    order.cancelReason ||
+    order.reason ||
+    order.cancel_reason ||
+    order.cancelNote ||
+    order.note ||
+    "";
+
+  const cleanedReason = String(reason || "").trim();
+
+  if (!cleanedReason) {
+    return "Không có lý do";
+  }
+
+  if (cleanedReason.length > 45) {
+    return `${cleanedReason.substring(0, 45)}...`;
+  }
+
+  return cleanedReason;
+};
+
 const getPlatformRevenue = (order) => {
   const price = parseMoney(order.price);
+  const status = getOrderStatus(order);
 
-  if (!COMPLETED_STATUSES.includes(order.status) || price <= 0) {
+  if (!COMPLETED_STATUSES.includes(status) || price <= 0) {
     return 0;
   }
 
@@ -106,7 +216,9 @@ const getPlatformRevenue = (order) => {
 };
 
 const getGrossRevenue = (order) => {
-  if (!COMPLETED_STATUSES.includes(order.status)) return 0;
+  const status = getOrderStatus(order);
+
+  if (!COMPLETED_STATUSES.includes(status)) return 0;
   return parseMoney(order.price);
 };
 
@@ -183,12 +295,10 @@ const buildTimeSeries = (orders, range) => {
     }
 
     const start =
-      range.start ||
-      new Date(Math.min(...dates.map((date) => date.getTime())));
+      range.start || new Date(Math.min(...dates.map((date) => date.getTime())));
 
     const end =
-      range.end ||
-      new Date(Math.max(...dates.map((date) => date.getTime())));
+      range.end || new Date(Math.max(...dates.map((date) => date.getTime())));
 
     const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
     const endCursor = new Date(end.getFullYear(), end.getMonth() + 1, 1);
@@ -225,9 +335,11 @@ const buildTimeSeries = (orders, range) => {
     }
 
     const point = map.get(key);
+    const status = getOrderStatus(order);
+
     point.totalOrders += 1;
 
-    if (COMPLETED_STATUSES.includes(order.status)) {
+    if (COMPLETED_STATUSES.includes(status)) {
       point.completedOrders += 1;
       point.grossRevenue += getGrossRevenue(order);
       point.platformRevenue += getPlatformRevenue(order);
@@ -241,7 +353,7 @@ const buildStatusData = (orders) => {
   const map = new Map();
 
   orders.forEach((order) => {
-    const status = order.status || "UNKNOWN";
+    const status = getOrderStatus(order);
     const label = STATUS_LABELS[status] || status;
 
     map.set(label, (map.get(label) || 0) + 1);
@@ -254,11 +366,39 @@ const buildVehicleData = (orders) => {
   const map = new Map();
 
   orders.forEach((order) => {
-    const label = VEHICLE_LABELS[order.vehicleType] || order.vehicleType || "Không rõ";
+    const vehicleType = getOrderVehicleType(order);
+    const label = getVehicleLabel(vehicleType);
+
     map.set(label, (map.get(label) || 0) + 1);
   });
 
   return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+};
+
+const buildCancelReasonData = (orders) => {
+  const map = new Map();
+
+  orders.forEach((order) => {
+    const status = getOrderStatus(order);
+    const hasCancelReason =
+      order.cancelReason ||
+      order.reason ||
+      order.cancel_reason ||
+      order.cancelNote ||
+      order.note;
+
+    if (!CANCELLED_STATUSES.includes(status) && !hasCancelReason) {
+      return;
+    }
+
+    const reason = getCancelReason(order);
+    map.set(reason, (map.get(reason) || 0) + 1);
+  });
+
+  return Array.from(map.entries())
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 8);
 };
 
 const buildTopDrivers = (orders, drivers) => {
@@ -271,7 +411,9 @@ const buildTopDrivers = (orders, drivers) => {
   const map = new Map();
 
   orders.forEach((order) => {
-    if (!COMPLETED_STATUSES.includes(order.status)) return;
+    const status = getOrderStatus(order);
+
+    if (!COMPLETED_STATUSES.includes(status)) return;
 
     const id = order.driverId || "UNKNOWN";
     const driver = driverMap.get(id);
@@ -327,6 +469,9 @@ const DashboardPage = () => {
     endDate: "2026-05-31",
   });
 
+  const [vehicleFilter, setVehicleFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+
   const [loading, setLoading] = useState(false);
 
   const [rawData, setRawData] = useState({
@@ -370,12 +515,30 @@ const DashboardPage = () => {
     }));
   };
 
+  const resetAdvancedFilters = () => {
+    setVehicleFilter("ALL");
+    setStatusFilter("ALL");
+  };
+
   const dashboard = useMemo(() => {
     const range = getFilterRange(customRange);
 
-    const filteredOrders = rawData.orders.filter((order) =>
+    const ordersInRange = rawData.orders.filter((order) =>
       isInRange(order.createdAt, range)
     );
+
+    const filteredOrders = ordersInRange.filter((order) => {
+      const orderVehicleType = getOrderVehicleType(order);
+      const orderStatus = getOrderStatus(order);
+
+      const matchVehicle =
+        vehicleFilter === "ALL" || orderVehicleType === vehicleFilter;
+
+      const matchStatus =
+        statusFilter === "ALL" || orderStatus === statusFilter;
+
+      return matchVehicle && matchStatus;
+    });
 
     const filteredDrivers = rawData.drivers.filter((driver) =>
       isInRange(driver.createdAt, range)
@@ -386,17 +549,19 @@ const DashboardPage = () => {
     );
 
     const completedOrders = filteredOrders.filter((order) =>
-      COMPLETED_STATUSES.includes(order.status)
+      COMPLETED_STATUSES.includes(getOrderStatus(order))
     );
 
-    const cancelledOrders = filteredOrders.filter(
-      (order) => order.status === "CANCELLED"
+    const cancelledOrders = filteredOrders.filter((order) =>
+      CANCELLED_STATUSES.includes(getOrderStatus(order))
+    );
+
+    const timeoutOrders = filteredOrders.filter((order) =>
+      TIMEOUT_STATUSES.includes(getOrderStatus(order))
     );
 
     const activeOrders = filteredOrders.filter((order) =>
-      ["SEARCHING", "FOUND", "ARRIVED_PICKUP", "DELIVERING", "RETURNING"].includes(
-        order.status
-      )
+      ACTIVE_ORDER_STATUSES.includes(getOrderStatus(order))
     );
 
     const grossRevenue = completedOrders.reduce(
@@ -417,15 +582,27 @@ const DashboardPage = () => {
         ? (completedOrders.length / filteredOrders.length) * 100
         : 0;
 
+    const cancelRate =
+      filteredOrders.length > 0
+        ? (cancelledOrders.length / filteredOrders.length) * 100
+        : 0;
+
+    const timeoutRate =
+      filteredOrders.length > 0
+        ? (timeoutOrders.length / filteredOrders.length) * 100
+        : 0;
+
     const activeDrivers = rawData.drivers.filter((driver) =>
       ["ACTIVE", "READY", "BUSY"].includes(driver.status)
     );
 
     return {
       range,
+      ordersInRange,
       filteredOrders,
       completedOrders,
       cancelledOrders,
+      timeoutOrders,
       activeOrders,
       filteredDrivers,
       filteredCustomers,
@@ -433,13 +610,16 @@ const DashboardPage = () => {
       platformRevenue,
       averageOrderValue,
       completionRate,
+      cancelRate,
+      timeoutRate,
       activeDrivers,
       chartData: buildTimeSeries(filteredOrders, range),
       statusData: buildStatusData(filteredOrders),
       vehicleData: buildVehicleData(filteredOrders),
+      cancelReasonData: buildCancelReasonData(filteredOrders),
       topDrivers: buildTopDrivers(filteredOrders, rawData.drivers),
     };
-  }, [rawData, customRange]);
+  }, [rawData, customRange, vehicleFilter, statusFilter]);
 
   return (
     <div className="dashboard-container">
@@ -447,7 +627,9 @@ const DashboardPage = () => {
         <div>
           <p className="eyebrow">DuckPost Admin</p>
           <h1>Tổng quan hệ thống</h1>
-          <p>Thống kê doanh thu, đơn hàng, tài xế và khách hàng theo khoảng thời gian.</p>
+          <p>
+            Thống kê doanh thu, đơn hàng, tài xế và khách hàng theo khoảng thời gian.
+          </p>
         </div>
 
         <div className="dashboard-filter">
@@ -473,6 +655,58 @@ const DashboardPage = () => {
             />
           </div>
 
+          <div className="date-field">
+            <span>Loại xe</span>
+            <select
+              value={vehicleFilter}
+              onChange={(event) => setVehicleFilter(event.target.value)}
+              style={{
+                minWidth: 160,
+                height: 38,
+                borderRadius: 10,
+                border: "1px solid #d1d5db",
+                padding: "0 10px",
+                fontWeight: 700,
+                color: "#111827",
+                background: "white",
+              }}
+            >
+              {VEHICLE_FILTER_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="date-field">
+            <span>Trạng thái</span>
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              style={{
+                minWidth: 190,
+                height: 38,
+                borderRadius: 10,
+                border: "1px solid #d1d5db",
+                padding: "0 10px",
+                fontWeight: 700,
+                color: "#111827",
+                background: "white",
+              }}
+            >
+              {STATUS_FILTER_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button className="btn-refresh-dashboard" onClick={resetAdvancedFilters}>
+            Xóa lọc
+          </button>
+
           <button className="btn-refresh-dashboard" onClick={fetchDashboardData}>
             {loading ? "Đang tải..." : "Làm mới"}
           </button>
@@ -487,9 +721,7 @@ const DashboardPage = () => {
             <div className="stat-value">
               {formatMoney(dashboard.platformRevenue)}
             </div>
-            <div className="stat-subtext">
-              Chiết khấu từ đơn hoàn thành
-            </div>
+            <div className="stat-subtext">Chiết khấu từ đơn hoàn thành</div>
           </div>
         </div>
 
@@ -501,7 +733,7 @@ const DashboardPage = () => {
               {formatNumber(dashboard.filteredOrders.length)}
             </div>
             <div className="stat-subtext neutral">
-              Hoàn thành: {formatNumber(dashboard.completedOrders.length)}
+              Tổng trong khoảng ngày: {formatNumber(dashboard.ordersInRange.length)}
             </div>
           </div>
         </div>
@@ -514,7 +746,7 @@ const DashboardPage = () => {
               {formatPercent(dashboard.completionRate)}
             </div>
             <div className="stat-subtext neutral">
-              Hủy: {formatNumber(dashboard.cancelledOrders.length)} đơn
+              Hoàn thành: {formatNumber(dashboard.completedOrders.length)} đơn
             </div>
           </div>
         </div>
@@ -528,6 +760,32 @@ const DashboardPage = () => {
             </div>
             <div className="stat-subtext neutral">
               Tổng giá trị: {formatMoney(dashboard.grossRevenue)}
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon red">⚠️</div>
+          <div>
+            <div className="stat-title">Tỷ lệ hủy đơn</div>
+            <div className="stat-value">
+              {formatPercent(dashboard.cancelRate)}
+            </div>
+            <div className="stat-subtext neutral">
+              Đã hủy: {formatNumber(dashboard.cancelledOrders.length)} đơn
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon purple">🔎</div>
+          <div>
+            <div className="stat-title">Không tìm được tài xế</div>
+            <div className="stat-value">
+              {formatNumber(dashboard.timeoutOrders.length)}
+            </div>
+            <div className="stat-subtext neutral">
+              Tỷ lệ: {formatPercent(dashboard.timeoutRate)}
             </div>
           </div>
         </div>
@@ -571,7 +829,11 @@ const DashboardPage = () => {
           <div className="chart-box">
             <ResponsiveContainer>
               <ComposedChart data={dashboard.chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#e5e7eb"
+                />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} />
                 <YAxis
                   yAxisId="left"
@@ -629,7 +891,10 @@ const DashboardPage = () => {
                   paddingAngle={2}
                 >
                   {dashboard.statusData.map((entry, index) => (
-                    <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    <Cell
+                      key={entry.name}
+                      fill={PIE_COLORS[index % PIE_COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => `${value} đơn`} />
@@ -658,13 +923,82 @@ const DashboardPage = () => {
                   label
                 >
                   {dashboard.vehicleData.map((entry, index) => (
-                    <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    <Cell
+                      key={entry.name}
+                      fill={PIE_COLORS[index % PIE_COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => `${value} đơn`} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="chart-card wide">
+          <div className="chart-header">
+            <div>
+              <h3>Lý do hủy đơn phổ biến</h3>
+              <p>
+                Thống kê từ các đơn đã hủy hoặc đơn có ghi nhận lý do hủy / sự cố
+              </p>
+            </div>
+          </div>
+
+          <div className="chart-box small">
+            {dashboard.cancelReasonData.length > 0 ? (
+              <ResponsiveContainer>
+                <BarChart
+                  data={dashboard.cancelReasonData}
+                  layout="vertical"
+                  margin={{ left: 20, right: 25, top: 10, bottom: 10 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={false}
+                    stroke="#e5e7eb"
+                  />
+                  <XAxis
+                    type="number"
+                    axisLine={false}
+                    tickLine={false}
+                    allowDecimals={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={180}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip formatter={(value) => `${value} đơn`} />
+                  <Legend />
+                  <Bar
+                    dataKey="value"
+                    name="Số đơn"
+                    fill="#dc2626"
+                    radius={[0, 6, 6, 0]}
+                    maxBarSize={34}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div
+                style={{
+                  height: "100%",
+                  minHeight: 220,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#64748b",
+                  fontWeight: 700,
+                  textAlign: "center",
+                }}
+              >
+                Chưa có dữ liệu lý do hủy trong khoảng lọc hiện tại.
+              </div>
+            )}
           </div>
         </div>
 
@@ -683,7 +1017,11 @@ const DashboardPage = () => {
                 layout="vertical"
                 margin={{ left: 20, right: 20 }}
               >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  horizontal={false}
+                  stroke="#e5e7eb"
+                />
                 <XAxis
                   type="number"
                   axisLine={false}
