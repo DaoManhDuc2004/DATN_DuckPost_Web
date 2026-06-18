@@ -181,7 +181,14 @@ const WalletPage = () => {
       return;
     }
 
-    const finalAmount = isAdding ? Number(adjustAmount) : -Math.abs(Number(adjustAmount));
+    const amountNumber = Number(adjustAmount);
+    const currentBalance = Number(selectedDriver.walletBalance || 0);
+
+    if (!isAdding && amountNumber > currentBalance) {
+      alert(`Không thể trừ ${amountNumber.toLocaleString("vi-VN")} đ. ` + `Số dư hiện tại của tài xế chỉ có ` + `${currentBalance.toLocaleString("vi-VN")} đ.`);
+      return;
+    }
+    const finalAmount = isAdding ? amountNumber : -amountNumber;
 
     try {
       const url = `/admin/wallet/adjust` + `?driverId=${selectedDriver.id}` + `&amount=${finalAmount}` + `&reason=${encodeURIComponent(adjustReason.trim())}`;
@@ -194,7 +201,10 @@ const WalletPage = () => {
       fetchTransactions();
     } catch (error) {
       console.error("Lỗi cập nhật ví:", error);
-      alert("Lỗi cập nhật ví tài xế!");
+
+      const message = error.response?.data || "Lỗi cập nhật ví tài xế!";
+
+      alert(typeof message === "string" ? message : message.message || "Lỗi cập nhật ví tài xế!");
     }
   };
 
