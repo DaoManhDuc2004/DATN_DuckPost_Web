@@ -71,7 +71,7 @@ const handleLogout = () => {
       </NavLink>
       <NavLink to="/drivers-all">
         <FaTruck className="nav-icon" />
-        <span className="nav-text">Quản lý Driver</span>
+        <span className="nav-text">Quản lý Tài xế</span>
       </NavLink>
       <NavLink to="/orders">
         <FaClipboardList className="nav-icon" />

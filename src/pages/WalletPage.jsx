@@ -15,6 +15,14 @@ const TRANSACTION_TYPES = [
   { value: "SYSTEM_ADJUST", label: "Điều chỉnh hệ thống" },
   { value: "DEDUCTION", label: "Trừ chiết khấu cũ" },
   { value: "DEPOSIT", label: "Nạp tiền cũ" },
+  {
+    value: "WITHDRAW_REQUEST",
+    label: "Yêu cầu rút tiền",
+  },
+  {
+    value: "WITHDRAW_REFUND",
+    label: "Hoàn tiền yêu cầu rút",
+  },
 ];
 
 const WalletPage = () => {
@@ -35,10 +43,15 @@ const WalletPage = () => {
   const [isAdding, setIsAdding] = useState(true);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [withdrawalLoading, setWithdrawalLoading] = useState(false);
+
+  const [withdrawalStatusFilter, setWithdrawalStatusFilter] = useState("ALL");
 
   useEffect(() => {
     fetchData();
     fetchTransactions();
+    fetchWithdrawals();
   }, []);
 
   const fetchData = async () => {
@@ -77,6 +90,20 @@ const WalletPage = () => {
       console.error("Lỗi lấy lịch sử giao dịch:", e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWithdrawals = async () => {
+    try {
+      setWithdrawalLoading(true);
+
+      const res = await ApiClient.get("/admin/withdrawals");
+
+      setWithdrawals(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error("Lỗi lấy yêu cầu rút tiền:", error);
+    } finally {
+      setWithdrawalLoading(false);
     }
   };
 
@@ -122,6 +149,14 @@ const WalletPage = () => {
       return passDriver && passType && passDate && passSearch;
     });
   }, [transactions, drivers, filterDriverId, filterType, filterStartDate, filterEndDate, searchText]);
+
+  const filteredWithdrawals = useMemo(() => {
+    if (withdrawalStatusFilter === "ALL") {
+      return withdrawals;
+    }
+
+    return withdrawals.filter((item) => item.status === withdrawalStatusFilter);
+  }, [withdrawals, withdrawalStatusFilter]);
 
   const stats = useMemo(() => {
     return transactions.reduce(
@@ -208,6 +243,65 @@ const WalletPage = () => {
     }
   };
 
+  const handleCompleteWithdrawal = async (withdrawal) => {
+    const confirmed = window.confirm(
+      `Xác nhận đã chuyển ${formatMoney(withdrawal.amount)} tới tài khoản:\n\n` +
+        `${withdrawal.bankName}\n` +
+        `${withdrawal.bankAccountNumber}\n` +
+        `${withdrawal.bankAccountHolder}\n\n` +
+        `Sau khi xác nhận, yêu cầu sẽ được đánh dấu hoàn tất.`,
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await ApiClient.put(`/admin/withdrawals/${withdrawal.id}/complete`, {
+        note: "Admin xác nhận đã chuyển khoản thủ công",
+      });
+
+      alert("Đã xác nhận giải ngân thành công!");
+
+      await Promise.all([fetchWithdrawals(), fetchData(), fetchTransactions()]);
+    } catch (error) {
+      console.error("Lỗi xác nhận giải ngân:", error);
+
+      const message = error.response?.data?.message || error.response?.data || "Không thể xác nhận giải ngân!";
+
+      alert(message);
+    }
+  };
+
+  const handleRejectWithdrawal = async (withdrawal) => {
+    const reason = window.prompt("Nhập lý do từ chối yêu cầu rút tiền:", "Thông tin tài khoản ngân hàng không hợp lệ");
+
+    if (reason === null) return;
+
+    if (!reason.trim()) {
+      alert("Vui lòng nhập lý do từ chối!");
+      return;
+    }
+
+    const confirmed = window.confirm(`Từ chối yêu cầu và hoàn lại ${formatMoney(withdrawal.amount)} vào ví tài xế?`);
+
+    if (!confirmed) return;
+
+    try {
+      await ApiClient.put(`/admin/withdrawals/${withdrawal.id}/reject`, {
+        note: reason.trim(),
+      });
+
+      alert("Đã từ chối yêu cầu và hoàn tiền vào ví tài xế!");
+
+      await Promise.all([fetchWithdrawals(), fetchData(), fetchTransactions()]);
+    } catch (error) {
+      console.error("Lỗi từ chối yêu cầu:", error);
+
+      const message = error.response?.data?.message || error.response?.data || "Không thể từ chối yêu cầu!";
+
+      alert(message);
+    }
+  };
+
   const openAdjustModal = (driver, type) => {
     setSelectedDriver(driver);
     setIsAdding(type === "ADD");
@@ -246,13 +340,45 @@ const WalletPage = () => {
 
   const getTypeClass = (type) => {
     if (["TOPUP", "DEPOSIT"].includes(type)) return "topup";
-    if (["ORDER_DEDUCTION", "DEDUCTION", "ADMIN_DEDUCT", "WITHDRAW"].includes(type)) {
+    if (["ORDER_DEDUCTION", "DEDUCTION", "ADMIN_DEDUCT", "WITHDRAW", "WITHDRAW_REQUEST"].includes(type)) {
       return "deduct";
     }
-    if (["RANK_BONUS", "MILESTONE_BONUS", "ADMIN_ADD", "REFUND"].includes(type)) {
+    if (["RANK_BONUS", "MILESTONE_BONUS", "ADMIN_ADD", "REFUND", "WITHDRAW_REFUND"].includes(type)) {
       return "bonus";
     }
     return "neutral";
+  };
+
+  const getWithdrawalStatusLabel = (status) => {
+    switch (status) {
+      case "PENDING":
+        return "Chờ giải ngân";
+
+      case "COMPLETED":
+        return "Đã chuyển khoản";
+
+      case "REJECTED":
+        return "Đã từ chối";
+
+      default:
+        return status || "--";
+    }
+  };
+
+  const getWithdrawalStatusClass = (status) => {
+    switch (status) {
+      case "PENDING":
+        return "pending";
+
+      case "COMPLETED":
+        return "completed";
+
+      case "REJECTED":
+        return "rejected";
+
+      default:
+        return "";
+    }
   };
 
   const getProviderLabel = (provider) => {
@@ -274,6 +400,7 @@ const WalletPage = () => {
           onClick={() => {
             fetchData();
             fetchTransactions();
+            fetchWithdrawals();
           }}
         >
           Làm mới dữ liệu
@@ -300,6 +427,114 @@ const WalletPage = () => {
           <div className="stat-title">Tổng phí đơn đã trừ</div>
           <div className="stat-value">{formatMoney(stats.totalOrderDeduction)}</div>
         </div>
+      </div>
+
+      <div className="section-card withdrawal-admin-section">
+        <div className="section-title-row">
+          <div>
+            <h3>Yêu cầu rút tiền</h3>
+
+            <p>Admin kiểm tra thông tin ngân hàng, thực hiện chuyển khoản thủ công và xác nhận kết quả.</p>
+          </div>
+
+          <select className="withdrawal-filter" value={withdrawalStatusFilter} onChange={(e) => setWithdrawalStatusFilter(e.target.value)}>
+            <option value="ALL">Tất cả trạng thái</option>
+
+            <option value="PENDING">Chờ giải ngân</option>
+
+            <option value="COMPLETED">Đã chuyển khoản</option>
+
+            <option value="REJECTED">Đã từ chối</option>
+          </select>
+        </div>
+
+        <div className="withdrawal-summary">
+          <div>
+            <span>Đang chờ xử lý</span>
+
+            <b>{withdrawals.filter((item) => item.status === "PENDING").length} phiếu</b>
+          </div>
+
+          <div>
+            <span>Tổng tiền chờ giải ngân</span>
+
+            <b className="money-negative">
+              {formatMoney(withdrawals.filter((item) => item.status === "PENDING").reduce((sum, item) => sum + Number(item.amount || 0), 0))}
+            </b>
+          </div>
+        </div>
+
+        <div className="table-scroll">
+          <table className="withdrawal-table">
+            <thead>
+              <tr>
+                <th>Mã phiếu</th>
+                <th>Tài xế</th>
+                <th>Ngân hàng</th>
+                <th>Số tài khoản</th>
+                <th>Chủ tài khoản</th>
+                <th>Số tiền</th>
+                <th>Thời gian tạo</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {filteredWithdrawals.map((item) => (
+                <tr key={item.id || item._id}>
+                  <td className="withdrawal-code">{item.referenceCode}</td>
+
+                  <td>
+                    <b>{item.driverName}</b>
+                    <br />
+                    <small>{item.driverPhone}</small>
+                  </td>
+
+                  <td>{item.bankName}</td>
+
+                  <td>
+                    <b>{item.bankAccountNumber}</b>
+                  </td>
+
+                  <td>{item.bankAccountHolder}</td>
+
+                  <td>
+                    <b className="money-negative">{formatMoney(item.amount)}</b>
+                  </td>
+
+                  <td className="date-cell">{formatDate(item.createdAt)}</td>
+
+                  <td>
+                    <span className={`withdrawal-status ${getWithdrawalStatusClass(item.status)}`}>{getWithdrawalStatusLabel(item.status)}</span>
+
+                    {item.adminNote && <div className="withdrawal-note">{item.adminNote}</div>}
+                  </td>
+
+                  <td>
+                    {item.status === "PENDING" ? (
+                      <div className="withdrawal-actions">
+                        <button className="btn-withdraw-complete" onClick={() => handleCompleteWithdrawal(item)}>
+                          Đã chuyển
+                        </button>
+
+                        <button className="btn-withdraw-reject" onClick={() => handleRejectWithdrawal(item)}>
+                          Từ chối
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="processed-text">Đã xử lý</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {withdrawalLoading && <p className="empty-msg">Đang tải yêu cầu rút tiền...</p>}
+
+        {!withdrawalLoading && filteredWithdrawals.length === 0 && <p className="empty-msg">Không có yêu cầu rút tiền phù hợp.</p>}
       </div>
 
       <div className="section-card">
