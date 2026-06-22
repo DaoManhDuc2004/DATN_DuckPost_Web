@@ -97,3 +97,77 @@ th {
   font-weight: 700;
   border-radius: 12px;
 }
+
+.driver-date-filter-panel {
+  margin: 16px 0 20px;
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.driver-date-filter-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.driver-date-filter-title h3 {
+  margin: 0 0 5px;
+}
+
+.driver-date-filter-title p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.driver-date-filter-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.driver-date-filter-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.driver-date-filter-fields span {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.driver-date-filter-fields input {
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+}
+.btn-reset-driver-date {
+  padding: 9px 15px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #e2e8f0;
+  color: #334155 !important;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-reset-driver-date:hover {
+  background: #cbd5e1;
+  color: #0f172a !important;
+}
+
+.driver-date-filter-error {
+  margin-top: 10px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+}

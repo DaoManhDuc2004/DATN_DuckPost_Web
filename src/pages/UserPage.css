@@ -465,3 +465,20 @@
     margin-top: 12px;
   }
 }
+
+.customer-date-filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.customer-date-filter-item label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+}
+
+.customer-date-filter-item input {
+  width: 100%;
+  box-sizing: border-box;
+}

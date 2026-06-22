@@ -590,3 +590,31 @@
 .btn-restore-rank:hover {
   background: #d97706;
 }
+
+.driver-date-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.driver-date-filter label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.driver-date-filter input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #111827;
+  outline: none;
+}
+
+.driver-date-filter input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}

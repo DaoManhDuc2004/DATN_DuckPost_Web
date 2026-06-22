@@ -1,20 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import ApiClient from "../ApiClient";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ComposedChart,
-  Legend,
-  Line,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, ComposedChart, Legend, Line, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import "./Dashboard.css";
 
 const COMPLETED_STATUSES = ["COMPLETED", "RETURNED_COMPLETED"];
@@ -23,14 +9,7 @@ const CANCELLED_STATUSES = ["CANCELLED", "CUSTOMER_CANCELLED", "DRIVER_CANCELLED
 
 const TIMEOUT_STATUSES = ["TIMEOUT_ALL"];
 
-const ACTIVE_ORDER_STATUSES = [
-  "SEARCHING",
-  "FOUND",
-  "PICKING_UP",
-  "ARRIVED_PICKUP",
-  "DELIVERING",
-  "RETURNING",
-];
+const ACTIVE_ORDER_STATUSES = ["SEARCHING", "FOUND", "PICKING_UP", "ARRIVED_PICKUP", "DELIVERING", "RETURNING"];
 
 const STATUS_LABELS = {
   SEARCHING: "Đang tìm tài xế",
@@ -79,16 +58,16 @@ const VEHICLE_FILTER_OPTIONS = [
   { value: "CAR7", label: "Bán tải / Xe tải to" },
 ];
 
-const PIE_COLORS = [
-  "#2563eb",
-  "#16a34a",
-  "#f97316",
-  "#7c3aed",
-  "#dc2626",
-  "#0891b2",
-  "#ca8a04",
-  "#475569",
+const TOP_DRIVER_OPTIONS = [
+  { value: "5", label: "Top 5" },
+  { value: "10", label: "Top 10" },
+  { value: "20", label: "Top 20" },
+  { value: "30", label: "Top 30" },
+  { value: "50", label: "Top 50" },
+  { value: "ALL", label: "Tất cả" },
 ];
+
+const PIE_COLORS = ["#2563eb", "#16a34a", "#f97316", "#7c3aed", "#dc2626", "#0891b2", "#ca8a04", "#475569"];
 
 const getDocumentId = (item) => {
   if (!item) return "";
@@ -146,13 +125,7 @@ const normalizeVehicleType = (value) => {
     return "CAR7";
   }
 
-  if (
-    v.includes("CAR4") ||
-    v.includes("Ô TÔ") ||
-    v.includes("OTO") ||
-    v.includes("CAR") ||
-    v.includes("XE TẢI NHỎ")
-  ) {
+  if (v.includes("CAR4") || v.includes("Ô TÔ") || v.includes("OTO") || v.includes("CAR") || v.includes("XE TẢI NHỎ")) {
     return "CAR4";
   }
 
@@ -160,14 +133,7 @@ const normalizeVehicleType = (value) => {
 };
 
 const getOrderVehicleType = (order) => {
-  return normalizeVehicleType(
-    order.vehicleType ||
-      order.type ||
-      order.driverVehicleType ||
-      order.vehicle ||
-      order.driverVehicle ||
-      ""
-  );
+  return normalizeVehicleType(order.vehicleType || order.type || order.driverVehicleType || order.vehicle || order.driverVehicle || "");
 };
 
 const getVehicleLabel = (value) => {
@@ -182,13 +148,7 @@ const getOrderStatus = (order) => {
 };
 
 const getCancelReason = (order) => {
-  const reason =
-    order.cancelReason ||
-    order.reason ||
-    order.cancel_reason ||
-    order.cancelNote ||
-    order.note ||
-    "";
+  const reason = order.cancelReason || order.reason || order.cancel_reason || order.cancelNote || order.note || "";
 
   const cleanedReason = String(reason || "").trim();
 
@@ -223,13 +183,9 @@ const getGrossRevenue = (order) => {
 };
 
 const getFilterRange = (customRange) => {
-  const start = customRange?.startDate
-    ? new Date(`${customRange.startDate}T00:00:00`)
-    : null;
+  const start = customRange?.startDate ? new Date(`${customRange.startDate}T00:00:00`) : null;
 
-  const endDisplay = customRange?.endDate
-    ? new Date(`${customRange.endDate}T00:00:00`)
-    : null;
+  const endDisplay = customRange?.endDate ? new Date(`${customRange.endDate}T00:00:00`) : null;
 
   const end = endDisplay ? new Date(endDisplay) : null;
 
@@ -242,10 +198,7 @@ const getFilterRange = (customRange) => {
   return {
     start,
     end,
-    label:
-      start && endDisplay
-        ? `${start.toLocaleDateString("vi-VN")} - ${endDisplay.toLocaleDateString("vi-VN")}`
-        : "Khoảng thời gian tùy chọn",
+    label: start && endDisplay ? `${start.toLocaleDateString("vi-VN")} - ${endDisplay.toLocaleDateString("vi-VN")}` : "Khoảng thời gian tùy chọn",
     groupType: days > 62 ? "MONTH" : "DAY",
   };
 };
@@ -294,11 +247,9 @@ const buildTimeSeries = (orders, range) => {
       return [];
     }
 
-    const start =
-      range.start || new Date(Math.min(...dates.map((date) => date.getTime())));
+    const start = range.start || new Date(Math.min(...dates.map((date) => date.getTime())));
 
-    const end =
-      range.end || new Date(Math.max(...dates.map((date) => date.getTime())));
+    const end = range.end || new Date(Math.max(...dates.map((date) => date.getTime())));
 
     const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
     const endCursor = new Date(end.getFullYear(), end.getMonth() + 1, 1);
@@ -380,12 +331,7 @@ const buildCancelReasonData = (orders) => {
 
   orders.forEach((order) => {
     const status = getOrderStatus(order);
-    const hasCancelReason =
-      order.cancelReason ||
-      order.reason ||
-      order.cancel_reason ||
-      order.cancelNote ||
-      order.note;
+    const hasCancelReason = order.cancelReason || order.reason || order.cancel_reason || order.cancelNote || order.note;
 
     if (!CANCELLED_STATUSES.includes(status) && !hasCancelReason) {
       return;
@@ -437,9 +383,9 @@ const buildTopDrivers = (orders, drivers) => {
     row.platformRevenue += getPlatformRevenue(order);
   });
 
-  return Array.from(map.values())
-    .sort((a, b) => b.platformRevenue - a.platformRevenue)
-    .slice(0, 6);
+return Array.from(map.values()).sort(
+  (a, b) => b.platformRevenue - a.platformRevenue
+);
 };
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -452,13 +398,56 @@ const CustomTooltip = ({ active, payload, label }) => {
       {payload.map((item) => (
         <div className="tooltip-row" key={item.dataKey}>
           <span>{item.name}:</span>
-          <b>
-            {item.dataKey?.toLowerCase().includes("revenue")
-              ? formatMoney(item.value)
-              : formatNumber(item.value)}
-          </b>
+          <b>{item.dataKey?.toLowerCase().includes("revenue") ? formatMoney(item.value) : formatNumber(item.value)}</b>
         </div>
       ))}
+    </div>
+  );
+};
+
+const TopDriverTooltip = ({
+  active,
+  payload,
+}) => {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  const driver = payload[0].payload;
+
+  return (
+    <div className="custom-tooltip">
+      <div className="tooltip-date">
+        #{driver.rank} {driver.name}
+      </div>
+
+      <div className="tooltip-row">
+        <span>Số điện thoại:</span>
+        <b>{driver.phone}</b>
+      </div>
+
+      <div className="tooltip-row">
+        <span>Đơn hoàn thành:</span>
+        <b>{formatNumber(driver.totalOrders)} đơn</b>
+      </div>
+
+      <div className="tooltip-row">
+        <span>Tổng giá trị đơn:</span>
+        <b>{formatMoney(driver.grossRevenue)}</b>
+      </div>
+
+      <div className="tooltip-row">
+        <span>Doanh thu hệ thống:</span>
+        <b>{formatMoney(driver.platformRevenue)}</b>
+      </div>
+
+      <div className="tooltip-row">
+        <span>Điểm đánh giá:</span>
+        <b>
+          {Number(driver.averageRating || 0).toFixed(1)}
+          /5
+        </b>
+      </div>
     </div>
   );
 };
@@ -471,7 +460,7 @@ const DashboardPage = () => {
 
   const [vehicleFilter, setVehicleFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
-
+const [topDriverLimit, setTopDriverLimit] = useState("5");
   const [loading, setLoading] = useState(false);
 
   const [rawData, setRawData] = useState({
@@ -495,9 +484,7 @@ const DashboardPage = () => {
       ]);
 
       setRawData({
-        drivers: Array.isArray(driverRes.data)
-          ? driverRes.data.filter((driver) => driver.role === "DRIVER")
-          : [],
+        drivers: Array.isArray(driverRes.data) ? driverRes.data.filter((driver) => driver.role === "DRIVER") : [],
         customers: Array.isArray(customerRes.data) ? customerRes.data : [],
         orders: Array.isArray(orderRes.data) ? orderRes.data : [],
       });
@@ -523,78 +510,44 @@ const DashboardPage = () => {
   const dashboard = useMemo(() => {
     const range = getFilterRange(customRange);
 
-    const ordersInRange = rawData.orders.filter((order) =>
-      isInRange(order.createdAt, range)
-    );
+    const ordersInRange = rawData.orders.filter((order) => isInRange(order.createdAt, range));
 
     const filteredOrders = ordersInRange.filter((order) => {
       const orderVehicleType = getOrderVehicleType(order);
       const orderStatus = getOrderStatus(order);
 
-      const matchVehicle =
-        vehicleFilter === "ALL" || orderVehicleType === vehicleFilter;
+      const matchVehicle = vehicleFilter === "ALL" || orderVehicleType === vehicleFilter;
 
-      const matchStatus =
-        statusFilter === "ALL" || orderStatus === statusFilter;
+      const matchStatus = statusFilter === "ALL" || orderStatus === statusFilter;
 
       return matchVehicle && matchStatus;
     });
 
-    const filteredDrivers = rawData.drivers.filter((driver) =>
-      isInRange(driver.createdAt, range)
-    );
+    const filteredDrivers = rawData.drivers.filter((driver) => isInRange(driver.createdAt, range));
 
-    const filteredCustomers = rawData.customers.filter((customer) =>
-      isInRange(customer.createdAt, range)
-    );
+    const filteredCustomers = rawData.customers.filter((customer) => isInRange(customer.createdAt, range));
 
-    const completedOrders = filteredOrders.filter((order) =>
-      COMPLETED_STATUSES.includes(getOrderStatus(order))
-    );
+    const completedOrders = filteredOrders.filter((order) => COMPLETED_STATUSES.includes(getOrderStatus(order)));
 
-    const cancelledOrders = filteredOrders.filter((order) =>
-      CANCELLED_STATUSES.includes(getOrderStatus(order))
-    );
+    const cancelledOrders = filteredOrders.filter((order) => CANCELLED_STATUSES.includes(getOrderStatus(order)));
 
-    const timeoutOrders = filteredOrders.filter((order) =>
-      TIMEOUT_STATUSES.includes(getOrderStatus(order))
-    );
+    const timeoutOrders = filteredOrders.filter((order) => TIMEOUT_STATUSES.includes(getOrderStatus(order)));
 
-    const activeOrders = filteredOrders.filter((order) =>
-      ACTIVE_ORDER_STATUSES.includes(getOrderStatus(order))
-    );
+    const activeOrders = filteredOrders.filter((order) => ACTIVE_ORDER_STATUSES.includes(getOrderStatus(order)));
 
-    const grossRevenue = completedOrders.reduce(
-      (total, order) => total + getGrossRevenue(order),
-      0
-    );
+    const grossRevenue = completedOrders.reduce((total, order) => total + getGrossRevenue(order), 0);
 
-    const platformRevenue = completedOrders.reduce(
-      (total, order) => total + getPlatformRevenue(order),
-      0
-    );
+    const platformRevenue = completedOrders.reduce((total, order) => total + getPlatformRevenue(order), 0);
 
-    const averageOrderValue =
-      completedOrders.length > 0 ? grossRevenue / completedOrders.length : 0;
+    const averageOrderValue = completedOrders.length > 0 ? grossRevenue / completedOrders.length : 0;
 
-    const completionRate =
-      filteredOrders.length > 0
-        ? (completedOrders.length / filteredOrders.length) * 100
-        : 0;
+    const completionRate = filteredOrders.length > 0 ? (completedOrders.length / filteredOrders.length) * 100 : 0;
 
-    const cancelRate =
-      filteredOrders.length > 0
-        ? (cancelledOrders.length / filteredOrders.length) * 100
-        : 0;
+    const cancelRate = filteredOrders.length > 0 ? (cancelledOrders.length / filteredOrders.length) * 100 : 0;
 
-    const timeoutRate =
-      filteredOrders.length > 0
-        ? (timeoutOrders.length / filteredOrders.length) * 100
-        : 0;
+    const timeoutRate = filteredOrders.length > 0 ? (timeoutOrders.length / filteredOrders.length) * 100 : 0;
 
-    const activeDrivers = rawData.drivers.filter((driver) =>
-      ["ACTIVE", "READY", "BUSY"].includes(driver.status)
-    );
+    const activeDrivers = rawData.drivers.filter((driver) => ["ACTIVE", "READY", "BUSY"].includes(driver.status));
 
     return {
       range,
@@ -621,38 +574,39 @@ const DashboardPage = () => {
     };
   }, [rawData, customRange, vehicleFilter, statusFilter]);
 
+  const visibleTopDrivers = useMemo(() => {
+  const source =
+    topDriverLimit === "ALL"
+      ? dashboard.topDrivers
+      : dashboard.topDrivers.slice(
+          0,
+          Number(topDriverLimit)
+        );
+
+  return source.map((driver, index) => ({
+    ...driver,
+    rank: index + 1,
+    displayName: `${index + 1}. ${driver.name}`,
+  }));
+}, [dashboard.topDrivers, topDriverLimit]);
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
         <div>
           <p className="eyebrow">DuckPost Admin</p>
           <h1>Tổng quan hệ thống</h1>
-          <p>
-            Thống kê doanh thu, đơn hàng, tài xế và khách hàng theo khoảng thời gian.
-          </p>
+          <p>Thống kê doanh thu, đơn hàng, tài xế và khách hàng theo khoảng thời gian.</p>
         </div>
 
         <div className="dashboard-filter">
           <div className="date-field">
             <span>Từ ngày</span>
-            <input
-              type="date"
-              value={customRange.startDate}
-              onChange={(event) =>
-                handleCustomDateChange("startDate", event.target.value)
-              }
-            />
+            <input type="date" value={customRange.startDate} onChange={(event) => handleCustomDateChange("startDate", event.target.value)} />
           </div>
 
           <div className="date-field">
             <span>Đến ngày</span>
-            <input
-              type="date"
-              value={customRange.endDate}
-              onChange={(event) =>
-                handleCustomDateChange("endDate", event.target.value)
-              }
-            />
+            <input type="date" value={customRange.endDate} onChange={(event) => handleCustomDateChange("endDate", event.target.value)} />
           </div>
 
           <div className="date-field">
@@ -718,9 +672,7 @@ const DashboardPage = () => {
           <div className="stat-icon">₫</div>
           <div>
             <div className="stat-title">Doanh thu hệ thống</div>
-            <div className="stat-value">
-              {formatMoney(dashboard.platformRevenue)}
-            </div>
+            <div className="stat-value">{formatMoney(dashboard.platformRevenue)}</div>
             <div className="stat-subtext">Chiết khấu từ đơn hoàn thành</div>
           </div>
         </div>
@@ -729,12 +681,8 @@ const DashboardPage = () => {
           <div className="stat-icon blue">📦</div>
           <div>
             <div className="stat-title">Tổng đơn hàng</div>
-            <div className="stat-value">
-              {formatNumber(dashboard.filteredOrders.length)}
-            </div>
-            <div className="stat-subtext neutral">
-              Tổng trong khoảng ngày: {formatNumber(dashboard.ordersInRange.length)}
-            </div>
+            <div className="stat-value">{formatNumber(dashboard.filteredOrders.length)}</div>
+            <div className="stat-subtext neutral">Tổng trong khoảng ngày: {formatNumber(dashboard.ordersInRange.length)}</div>
           </div>
         </div>
 
@@ -742,12 +690,8 @@ const DashboardPage = () => {
           <div className="stat-icon green">✅</div>
           <div>
             <div className="stat-title">Tỷ lệ hoàn thành</div>
-            <div className="stat-value">
-              {formatPercent(dashboard.completionRate)}
-            </div>
-            <div className="stat-subtext neutral">
-              Hoàn thành: {formatNumber(dashboard.completedOrders.length)} đơn
-            </div>
+            <div className="stat-value">{formatPercent(dashboard.completionRate)}</div>
+            <div className="stat-subtext neutral">Hoàn thành: {formatNumber(dashboard.completedOrders.length)} đơn</div>
           </div>
         </div>
 
@@ -755,12 +699,8 @@ const DashboardPage = () => {
           <div className="stat-icon orange">💰</div>
           <div>
             <div className="stat-title">Giá trị đơn TB</div>
-            <div className="stat-value">
-              {formatMoney(dashboard.averageOrderValue)}
-            </div>
-            <div className="stat-subtext neutral">
-              Tổng giá trị: {formatMoney(dashboard.grossRevenue)}
-            </div>
+            <div className="stat-value">{formatMoney(dashboard.averageOrderValue)}</div>
+            <div className="stat-subtext neutral">Tổng giá trị: {formatMoney(dashboard.grossRevenue)}</div>
           </div>
         </div>
 
@@ -768,12 +708,8 @@ const DashboardPage = () => {
           <div className="stat-icon red">⚠️</div>
           <div>
             <div className="stat-title">Tỷ lệ hủy đơn</div>
-            <div className="stat-value">
-              {formatPercent(dashboard.cancelRate)}
-            </div>
-            <div className="stat-subtext neutral">
-              Đã hủy: {formatNumber(dashboard.cancelledOrders.length)} đơn
-            </div>
+            <div className="stat-value">{formatPercent(dashboard.cancelRate)}</div>
+            <div className="stat-subtext neutral">Đã hủy: {formatNumber(dashboard.cancelledOrders.length)} đơn</div>
           </div>
         </div>
 
@@ -781,12 +717,8 @@ const DashboardPage = () => {
           <div className="stat-icon purple">🔎</div>
           <div>
             <div className="stat-title">Không tìm được tài xế</div>
-            <div className="stat-value">
-              {formatNumber(dashboard.timeoutOrders.length)}
-            </div>
-            <div className="stat-subtext neutral">
-              Tỷ lệ: {formatPercent(dashboard.timeoutRate)}
-            </div>
+            <div className="stat-value">{formatNumber(dashboard.timeoutOrders.length)}</div>
+            <div className="stat-subtext neutral">Tỷ lệ: {formatPercent(dashboard.timeoutRate)}</div>
           </div>
         </div>
       </div>
@@ -803,73 +735,119 @@ const DashboardPage = () => {
           <b>{formatNumber(dashboard.filteredCustomers.length)}</b>
           <small>Tổng khách hàng: {formatNumber(rawData.customers.length)}</small>
         </div>
-
-        <div className="mini-stat-card">
-          <span>Tài xế hoạt động</span>
-          <b>{formatNumber(dashboard.activeDrivers.length)}</b>
-          <small>ACTIVE / READY / BUSY</small>
-        </div>
-
-        <div className="mini-stat-card">
-          <span>Đơn đang xử lý</span>
-          <b>{formatNumber(dashboard.activeOrders.length)}</b>
-          <small>Đang tìm, nhận, giao, hoàn hàng</small>
-        </div>
       </div>
 
       <div className="dashboard-grid">
-        <div className="chart-card wide">
-          <div className="chart-header">
-            <div>
-              <h3>Doanh thu và số đơn theo thời gian</h3>
-              <p>{dashboard.range.label}</p>
-            </div>
-          </div>
+<div className="chart-card wide top-driver-card">
+  <div className="chart-header">
+    <div>
+      <h3>Top tài xế theo doanh thu hệ thống</h3>
 
-          <div className="chart-box">
-            <ResponsiveContainer>
-              <ComposedChart data={dashboard.chartData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="#e5e7eb"
-                />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                <YAxis
-                  yAxisId="left"
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(value) => `${Math.round(value / 1000)}k`}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-                <Bar
-                  yAxisId="left"
-                  dataKey="platformRevenue"
-                  name="Doanh thu hệ thống"
-                  fill="#2563eb"
-                  radius={[6, 6, 0, 0]}
-                  maxBarSize={34}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="totalOrders"
-                  name="Số đơn"
-                  stroke="#f97316"
-                  strokeWidth={3}
-                  dot={{ r: 3 }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+      <p>
+        Xếp hạng từ các đơn hoàn thành trong khoảng
+        thời gian đã chọn
+      </p>
+    </div>
+
+    <div className="top-driver-filter">
+      <label htmlFor="topDriverLimit">
+        Số lượng hiển thị
+      </label>
+
+      <select
+        id="topDriverLimit"
+        value={topDriverLimit}
+        onChange={(event) =>
+          setTopDriverLimit(event.target.value)
+        }
+      >
+        {TOP_DRIVER_OPTIONS.map((option) => (
+          <option
+            key={option.value}
+            value={option.value}
+          >
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  </div>
+
+  {visibleTopDrivers.length > 0 ? (
+    <div className="top-drivers-scroll">
+      <div
+        className="top-drivers-chart-inner"
+        style={{
+          height: Math.max(
+            300,
+            visibleTopDrivers.length * 54
+          ),
+        }}
+      >
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+        >
+          <BarChart
+            data={visibleTopDrivers}
+            layout="vertical"
+            margin={{
+              left: 30,
+              right: 35,
+              top: 5,
+              bottom: 5,
+            }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              horizontal={false}
+              stroke="#e5e7eb"
+            />
+
+            <XAxis
+              type="number"
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(value) =>
+                `${Math.round(value / 1000)}k`
+              }
+            />
+
+            <YAxis
+              type="category"
+              dataKey="displayName"
+              width={155}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(value) =>
+                value.length > 23
+                  ? `${value.substring(0, 23)}...`
+                  : value
+              }
+            />
+
+            <Tooltip
+              content={<TopDriverTooltip />}
+            />
+
+            <Bar
+              dataKey="platformRevenue"
+              name="Doanh thu hệ thống"
+              fill="#16a34a"
+              radius={[0, 7, 7, 0]}
+              maxBarSize={30}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  ) : (
+    <div className="dashboard-empty-state">
+      Chưa có tài xế phát sinh đơn hoàn thành
+      trong khoảng thời gian hiện tại.
+    </div>
+  )}
+</div>
 
         <div className="chart-card">
           <div className="chart-header">
@@ -882,19 +860,9 @@ const DashboardPage = () => {
           <div className="pie-box">
             <ResponsiveContainer>
               <PieChart>
-                <Pie
-                  data={dashboard.statusData}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={50}
-                  outerRadius={78}
-                  paddingAngle={2}
-                >
+                <Pie data={dashboard.statusData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={78} paddingAngle={2}>
                   {dashboard.statusData.map((entry, index) => (
-                    <Cell
-                      key={entry.name}
-                      fill={PIE_COLORS[index % PIE_COLORS.length]}
-                    />
+                    <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => `${value} đơn`} />
@@ -915,18 +883,9 @@ const DashboardPage = () => {
           <div className="pie-box">
             <ResponsiveContainer>
               <PieChart>
-                <Pie
-                  data={dashboard.vehicleData}
-                  dataKey="value"
-                  nameKey="name"
-                  outerRadius={82}
-                  label
-                >
+                <Pie data={dashboard.vehicleData} dataKey="value" nameKey="name" outerRadius={82} label>
                   {dashboard.vehicleData.map((entry, index) => (
-                    <Cell
-                      key={entry.name}
-                      fill={PIE_COLORS[index % PIE_COLORS.length]}
-                    />
+                    <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => `${value} đơn`} />
@@ -940,47 +899,20 @@ const DashboardPage = () => {
           <div className="chart-header">
             <div>
               <h3>Lý do hủy đơn phổ biến</h3>
-              <p>
-                Thống kê từ các đơn đã hủy hoặc đơn có ghi nhận lý do hủy / sự cố
-              </p>
+              <p>Thống kê từ các đơn đã hủy hoặc đơn có ghi nhận lý do hủy / sự cố</p>
             </div>
           </div>
 
           <div className="chart-box small">
             {dashboard.cancelReasonData.length > 0 ? (
               <ResponsiveContainer>
-                <BarChart
-                  data={dashboard.cancelReasonData}
-                  layout="vertical"
-                  margin={{ left: 20, right: 25, top: 10, bottom: 10 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    horizontal={false}
-                    stroke="#e5e7eb"
-                  />
-                  <XAxis
-                    type="number"
-                    axisLine={false}
-                    tickLine={false}
-                    allowDecimals={false}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={180}
-                    axisLine={false}
-                    tickLine={false}
-                  />
+                <BarChart data={dashboard.cancelReasonData} layout="vertical" margin={{ left: 20, right: 25, top: 10, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
+                  <XAxis type="number" axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" width={180} axisLine={false} tickLine={false} />
                   <Tooltip formatter={(value) => `${value} đơn`} />
                   <Legend />
-                  <Bar
-                    dataKey="value"
-                    name="Số đơn"
-                    fill="#dc2626"
-                    radius={[0, 6, 6, 0]}
-                    maxBarSize={34}
-                  />
+                  <Bar dataKey="value" name="Số đơn" fill="#dc2626" radius={[0, 6, 6, 0]} maxBarSize={34} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -1012,47 +944,14 @@ const DashboardPage = () => {
 
           <div className="chart-box small">
             <ResponsiveContainer>
-              <BarChart
-                data={dashboard.topDrivers}
-                layout="vertical"
-                margin={{ left: 20, right: 20 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  horizontal={false}
-                  stroke="#e5e7eb"
-                />
-                <XAxis
-                  type="number"
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(value) => `${Math.round(value / 1000)}k`}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={105}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  formatter={(value, name) =>
-                    name === "Số đơn" ? `${value} đơn` : formatMoney(value)
-                  }
-                />
+              <BarChart data={dashboard.topDrivers} layout="vertical" margin={{ left: 20, right: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
+                <XAxis type="number" axisLine={false} tickLine={false} tickFormatter={(value) => `${Math.round(value / 1000)}k`} />
+                <YAxis type="category" dataKey="name" width={105} axisLine={false} tickLine={false} />
+                <Tooltip formatter={(value, name) => (name === "Số đơn" ? `${value} đơn` : formatMoney(value))} />
                 <Legend />
-                <Bar
-                  dataKey="platformRevenue"
-                  name="Doanh thu hệ thống"
-                  fill="#16a34a"
-                  radius={[0, 6, 6, 0]}
-                />
-                <Bar
-                  dataKey="totalOrders"
-                  name="Số đơn"
-                  fill="#f97316"
-                  radius={[0, 6, 6, 0]}
-                />
+                <Bar dataKey="platformRevenue" name="Doanh thu hệ thống" fill="#16a34a" radius={[0, 6, 6, 0]} />
+                <Bar dataKey="totalOrders" name="Số đơn" fill="#f97316" radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

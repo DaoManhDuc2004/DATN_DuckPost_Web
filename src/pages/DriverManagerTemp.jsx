@@ -11,6 +11,8 @@ const defaultDriverFilters = {
   licensePlate: "",
   vehicleType: "",
   status: "",
+  createdFrom: "",
+  createdTo: "",
 };
 
 const money = (value) =>
@@ -224,7 +226,6 @@ const DriverManagerByAdmin = () => {
         <div className="filter-header">
           <div>
             <h3>Bộ lọc tài xế</h3>
-            <p>Lọc theo tên, email, số điện thoại, CCCD, quê quán, biển số, loại xe và trạng thái.</p>
           </div>
 
           <div className="filter-actions">
@@ -268,6 +269,30 @@ const DriverManagerByAdmin = () => {
             <option value="BUSY">Đang giao</option>
             <option value="LOCKED">Đã khóa</option>
           </select>
+          <div className="driver-date-filter">
+  <label>Từ ngày đăng ký</label>
+
+  <input
+    type="date"
+    value={filters.createdFrom}
+    onChange={(e) =>
+      handleFilterChange("createdFrom", e.target.value)
+    }
+  />
+</div>
+
+<div className="driver-date-filter">
+  <label>Đến ngày đăng ký</label>
+
+  <input
+    type="date"
+    value={filters.createdTo}
+    min={filters.createdFrom || undefined}
+    onChange={(e) =>
+      handleFilterChange("createdTo", e.target.value)
+    }
+  />
+</div>
         </div>
       </div>
 

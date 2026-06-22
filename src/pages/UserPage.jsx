@@ -12,6 +12,8 @@ const UserPage = () => {
     hometown: "",
     gender: "",
     status: "",
+      createdFrom: "",
+  createdTo: "",
   };
 
   const [filters, setFilters] = useState(defaultFilters);
@@ -154,7 +156,6 @@ const UserPage = () => {
         <div className="customer-filter-header">
           <div>
             <h3>Bộ lọc khách hàng</h3>
-            <p>Lọc theo tên, số điện thoại, email, quê quán, giới tính và trạng thái tài khoản.</p>
           </div>
 
           <div className="customer-filter-actions">
@@ -186,6 +187,30 @@ const UserPage = () => {
             <option value="ACTIVE">Hoạt động</option>
             <option value="LOCKED">Đã khóa</option>
           </select>
+          <div className="customer-date-filter-item">
+  <label>Từ ngày đăng ký</label>
+
+  <input
+    type="date"
+    value={filters.createdFrom}
+    onChange={(e) =>
+      handleFilterChange("createdFrom", e.target.value)
+    }
+  />
+</div>
+
+<div className="customer-date-filter-item">
+  <label>Đến ngày đăng ký</label>
+
+  <input
+    type="date"
+    value={filters.createdTo}
+    min={filters.createdFrom || undefined}
+    onChange={(e) =>
+      handleFilterChange("createdTo", e.target.value)
+    }
+  />
+</div>
         </div>
       </div>
 
