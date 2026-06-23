@@ -37,7 +37,7 @@ const OrderPage = () => {
   };
 
   const handleLockDriver = async (driverId, driverName) => {
-    if (window.confirm(`Bạn có chắc chắn muốn KHÓA tài khoản của tài xế ${driverName} vì chuyến đi này không?`)) {
+    if (window.confirm(`Bạn có chắc chắn muốn KHÓA tài khoản của tài xế ?`)) {
       try {
         await ApiClient.post(`/admin/driver/toggle-lock?driverId=${driverId}&status=LOCKED`);
         alert(`Đã khóa tài khoản tài xế ${driverName} thành công!`);
