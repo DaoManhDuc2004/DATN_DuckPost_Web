@@ -12,8 +12,10 @@ const UserPage = () => {
     hometown: "",
     gender: "",
     status: "",
-      createdFrom: "",
-  createdTo: "",
+    createdFrom: "",
+    createdTo: "",
+    reportCountMin: "",
+    reportCountMax: "",
   };
 
   const [filters, setFilters] = useState(defaultFilters);
@@ -187,6 +189,39 @@ const UserPage = () => {
             <option value="ACTIVE">Hoạt động</option>
             <option value="LOCKED">Đã khóa</option>
           </select>
+          <div className="customer-report-filter-item">
+  <label>Từ số lần báo cáo</label>
+
+  <input
+    type="number"
+    min="0"
+    placeholder="Ví dụ: 1"
+    value={filters.reportCountMin}
+    onChange={(e) =>
+      handleFilterChange(
+        "reportCountMin",
+        e.target.value
+      )
+    }
+  />
+</div>
+
+<div className="customer-report-filter-item">
+  <label>Đến số lần báo cáo</label>
+
+  <input
+    type="number"
+    min={filters.reportCountMin || "0"}
+    placeholder="Ví dụ: 5"
+    value={filters.reportCountMax}
+    onChange={(e) =>
+      handleFilterChange(
+        "reportCountMax",
+        e.target.value
+      )
+    }
+  />
+</div>
           <div className="customer-date-filter-item">
   <label>Từ ngày đăng ký</label>
 

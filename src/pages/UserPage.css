@@ -482,3 +482,20 @@
   width: 100%;
   box-sizing: border-box;
 }
+
+.customer-report-filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.customer-report-filter-item label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+}
+
+.customer-report-filter-item input {
+  width: 100%;
+  box-sizing: border-box;
+}

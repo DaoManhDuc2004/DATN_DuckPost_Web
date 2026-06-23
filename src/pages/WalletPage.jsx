@@ -35,7 +35,7 @@ const WalletPage = () => {
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
   const [searchText, setSearchText] = useState("");
-
+  const [relatedCode, setRelatedCode] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [adjustAmount, setAdjustAmount] = useState("");
@@ -126,8 +126,11 @@ const WalletPage = () => {
       const driverName = getDriverName(t).toLowerCase();
       const driverPhone = getDriverPhone(t).toLowerCase();
       const note = (t.note || "").toLowerCase();
-      const ref = (t.referenceCode || t.orderId || "").toLowerCase();
+      const orderCode = (t.orderId || "").toLowerCase();
+      const referenceCode = (t.referenceCode || "").toLowerCase();
+
       const search = searchText.trim().toLowerCase();
+      const codeSearch = relatedCode.trim().toLowerCase();
 
       const passDriver = filterDriverId === "ALL" || t.driverId === filterDriverId;
       const passType = filterType === "ALL" || t.type === filterType;
@@ -144,11 +147,13 @@ const WalletPage = () => {
         passDate = passDate && new Date(t.createdAt) <= end;
       }
 
-      const passSearch = !search || driverName.includes(search) || driverPhone.includes(search) || note.includes(search) || ref.includes(search);
+      const passSearch = !search || driverName.includes(search) || driverPhone.includes(search) || note.includes(search);
 
-      return passDriver && passType && passDate && passSearch;
+      const passRelatedCode = !codeSearch || orderCode.includes(codeSearch) || referenceCode.includes(codeSearch);
+
+      return passDriver && passType && passDate && passSearch && passRelatedCode;
     });
-  }, [transactions, drivers, filterDriverId, filterType, filterStartDate, filterEndDate, searchText]);
+  }, [transactions, drivers, filterDriverId, filterType, filterStartDate, filterEndDate, searchText,relatedCode]);
 
   const filteredWithdrawals = useMemo(() => {
     if (withdrawalStatusFilter === "ALL") {
@@ -159,7 +164,7 @@ const WalletPage = () => {
   }, [withdrawals, withdrawalStatusFilter]);
 
   const stats = useMemo(() => {
-    return transactions.reduce(
+    return filteredTransactions.reduce(
       (acc, item) => {
         const amount = Number(item.amount || 0);
 
@@ -172,7 +177,7 @@ const WalletPage = () => {
         }
 
         if (item.type === "ADMIN_ADD") {
-          acc.totalAdminAdd += amount;
+          acc.totalAdminAdd += Math.abs(amount);
         }
 
         if (item.type === "ADMIN_DEDUCT") {
@@ -198,7 +203,7 @@ const WalletPage = () => {
         totalOut: 0,
       },
     );
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const handleAdjustSubmit = async () => {
     if (!selectedDriver) {
@@ -316,6 +321,7 @@ const WalletPage = () => {
     setFilterStartDate("");
     setFilterEndDate("");
     setSearchText("");
+    setRelatedCode("");
   };
 
   const formatMoney = (value) => {
@@ -599,7 +605,12 @@ const WalletPage = () => {
 
         <div className="history-filters advanced">
           <input type="text" placeholder="Tìm tên, SĐT, ghi chú, mã giao dịch..." value={searchText} onChange={(e) => setSearchText(e.target.value)} />
-
+            <input
+  type="text"
+  placeholder="Lọc mã đơn hoặc mã tham chiếu..."
+  value={relatedCode}
+  onChange={(e) => setRelatedCode(e.target.value)}
+/>
           <select value={filterDriverId} onChange={(e) => setFilterDriverId(e.target.value)}>
             <option value="ALL">Tất cả tài xế</option>
             {drivers.map((d) => (
