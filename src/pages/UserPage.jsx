@@ -263,7 +263,6 @@ const UserPage = () => {
               <th>Quê quán</th>
               <th>Trạng thái</th>
               <th>Ngày tạo</th>
-              <th>Hoạt động gần nhất</th>
               <th>Thông tin khóa</th>
               <th>Báo cáo sai hàng</th>
               <th>Hành động</th>
@@ -302,8 +301,6 @@ const UserPage = () => {
                 </td>
 
                 <td>{formatDateTime(user.createdAt)}</td>
-
-                <td>{formatDateTime(user.lastActiveAt)}</td>
 
                 <td>
                   {user.status === "LOCKED" ? (
